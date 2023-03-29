@@ -8,6 +8,8 @@ O SSE pode ser uma solução muito simples para receber dados do servidor em tem
 
 O interessante que não precisa instalar NENHUMA dependência ou pacote do servidor, como nos front.
 
+Dentre diversos usos e exemplos encontrado, para agilizar, utilizei um dashboard para IOT e foi criado 2 funções para simular um sensor de temperatura e outro de umidade.
+
 ### Especificação
 
 - [Mozilla - Server-sent events
@@ -30,15 +32,57 @@ Executando:
   Servidor executando na porta 8080
 ````
 
-Abrindo navegador `localhost:8080`, deve apresentar uma página HTML onde a data e hora, estará atualizando a cada segundo.
+Abrindo navegador `localhost:8080`, deve apresentar uma página com 2 gauges.
+
+### Onde a mágica acontece
+
+#### front-end
+
+Somente nestas 2 linhas, onde é instanciado o EventSource e na segunda linha, é adicionado para `ouvir` o evento enviado pelo servidor. 
+
+```js
+        const eventSource = new EventSource('/sensor-data-events');
+        eventSource.addEventListener('sensor-data', (e) => {
+            var jsonData = JSON.parse(e.data);
+            console.log(jsonData);
+        });
+```
+
+#### back-end
+
+No back-end você precisa apenas:
+
+- Definir os headers;
+- `imprimir` uma string com a definição do `evento`;
+- `imprimir` uma string com a definição dos dados a ser enviado (detalhe importante, colocar os dois \n\n);
+-  fazer o flush.
+
+```go
+	http.HandleFunc("/sensor-data-events", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		for {
+			dataString, _ := json.Marshal(getSensorValues())
+			fmt.Fprintf(w, "event: sensor-data\n")
+			fmt.Fprintf(w, "data: %s\n\n", dataString)
+			w.(http.Flusher).Flush()
+			time.Sleep(1000 * time.Millisecond)
+		}
+	})
+```
+
 
 ### Referências
 
-- [Full Cycle - Server-Sent Events (SSE): Comunicação em tempo real
-](https://www.youtube.com/watch?v=5TN9cyGev1M&t=4s)
-- [Mozilla - Server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)
 - [Wikipedia - Server-sent events
 ](https://en.wikipedia.org/wiki/Server-sent_events)
+- [Mozilla - Server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)
+- [Canvas Gauge](https://canvas-gauges.com/documentation/examples/)
+- [ESP32 Web Server: Display Sensor Readings in Gauges](https://randomnerdtutorials.com/esp32-web-server-gauges/)
+- [Full Cycle - Server-Sent Events (SSE): Comunicação em tempo real
+](https://www.youtube.com/watch?v=5TN9cyGev1M&t=4s)
+
 
 
 

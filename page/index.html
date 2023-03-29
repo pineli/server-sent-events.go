@@ -2,33 +2,193 @@
 <html>
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSE</title>
+    <title>SSE DASHBOARD - REAL TIME UPDATE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="http://cdn.rawgit.com/Mikhus/canvas-gauges/gh-pages/download/2.1.7/all/gauge.min.js"></script>
+    <style>
+        html {
+            font-family: Arial, Helvetica, sans-serif;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            color: rgb(0, 0, 0);
+        }
+        
+        p {
+            font-size: 1.4rem;
+        }
+        
+        body {
+            margin: 0;
+        }
+        
+        .content {
+            padding: 5%;
+        }
+        
+        .card-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+        
+        .card {
+            background-color: white;
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2b2b2b
+        }
+        
+        #server-log {
+            background-color: deepskyblue;
+            margin: 10px;
+            padding: 10px;
+        }
+    </style>
 </head>
 
 <body>
-    <h3>Data e Hora recebia em `tempo real` do servidor</h3>
-    <div id="server"></div>
+    <div class="content">
+
+        <div class="card-grid">
+            <div class="card">
+                <p class="card-title">Temperatura</p>
+                <canvas id="gauge-temperature"></canvas>
+            </div>
+            <div class="card">
+                <p class="card-title">Humidade</p>
+                <canvas id="gauge-humidity"></canvas>
+            </div>
+        </div>
+        <div id="server-log"></div>
+    </div>
     <script>
-        const eventSource = new EventSource('/sse-server');
-        eventSource.addEventListener('server', (event) => {
-            const message = document.getElementById('server');
-            message.innerHTML = event.data;
-            console.log(event);
+        var gaugeTemp = new LinearGauge({
+            renderTo: 'gauge-temperature',
+            width: 120,
+            height: 400,
+            units: "Temperatura C",
+            minValue: -20,
+            startAngle: 90,
+            ticksAngle: 180,
+            maxValue: 100,
+            colorValueBoxRect: "#000",
+            colorValueBoxRectEnd: "#000",
+            colorValueBoxBackground: "#f1fbfc",
+            valueDec: 2,
+            valueInt: 2,
+            majorTicks: [
+                "-20",
+                "-10",
+                "0",
+                "5",
+                "10",
+                "20",
+                "30",
+                "40",
+                "50",
+                "60",
+                "70",
+                "80",
+                "90",
+                "100",
+            ],
+            minorTicks: 4,
+            strokeTicks: true,
+            highlights: [{
+                "from": 60,
+                "to": 100,
+                "color": "#f29100"
+            }],
+            colorPlate: "#fff",
+            colorBarProgress: "#CC2936",
+            colorBarProgressEnd: "#049faa",
+            borderShadowWidth: 0,
+            borders: false,
+            needleType: "arrow",
+            needleWidth: 2,
+            needleCircleSize: 7,
+            needleCircleOuter: true,
+            needleCircleInner: false,
+            animationDuration: 1000,
+            animationRule: "linear",
+            barWidth: 10,
+        }).draw();
+
+        var gaugeHum = new RadialGauge({
+            renderTo: 'gauge-humidity',
+            width: 300,
+            height: 300,
+            units: "Umidade (%)",
+            minValue: 0,
+            maxValue: 100,
+            colorValueBoxRect: "#000",
+            colorValueBoxRectEnd: "#000",
+            colorValueBoxBackground: "#f1fbfc",
+            valueInt: 2,
+            majorTicks: [
+                "0",
+                "20",
+                "40",
+                "60",
+                "80",
+                "100"
+
+            ],
+            minorTicks: 4,
+            strokeTicks: true,
+            highlights: [{
+                "from": 80,
+                "to": 100,
+                "color": "#f29100"
+            }],
+            colorPlate: "#fff",
+            borderShadowWidth: 0,
+            borders: false,
+            needleType: "line",
+            colorNeedle: "#ce0700",
+            colorNeedleEnd: "#ce0700",
+            needleWidth: 2,
+            needleCircleSize: 3,
+            colorNeedleCircleOuter: "#ce0700",
+            needleCircleOuter: true,
+            needleCircleInner: false,
+            animationDuration: 1000,
+            animationRule: "linear"
+        }).draw();
+
+        const eventSource = new EventSource('/sensor-data-events');
+        eventSource.addEventListener('sensor-data', (e) => {
+            var jsonData = JSON.parse(e.data);
+            var log = document.getElementById("server-log");
+            log.innerHTML = "Dados recebidos do servidor: " + e.data;
+            gaugeTemp.value = jsonData.temperature;
+            gaugeHum.value = jsonData.humidity;
         });
 
-        document.getElementById("dnt").innerHTML = Date();
-    </script>
+        eventSource.addEventListener('open', function(e) {
+            //console.log("Events Connected");
+        }, false);
 
+        eventSource.addEventListener('error', function(e) {
+            if (e.target.readyState != EventSource.OPEN) {
+                // console.log("Events Disconnected");
+            }
+        }, false);
 
-    <h3>Data e Hora do navegador</h3>
-    <div id="browser"></div>
-    <script>
-        setInterval(function() {
-            document.getElementById("browser").innerHTML = Date();
-        }, 1000)
+        eventSource.addEventListener('message', function(e) {
+            //console.log("message", e.data);
+        }, false);
     </script>
 </body>
 
