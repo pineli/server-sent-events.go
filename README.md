@@ -32,7 +32,9 @@ Executando:
   Servidor executando na porta 8081
 ````
 
-Abrindo navegador `localhost:8081`, deve apresentar uma página com 2 gauges.
+Abrindo navegador `localhost:8081`
+
+![Dashboard](image/sse-dash.png)
 
 ### Onde a mágica acontece
 
