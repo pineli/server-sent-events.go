@@ -29,18 +29,18 @@ Executando:
 ```sh
 ❯ cd server-sent-events.go
 ❯ go run cmd/main.go
-  Servidor executando na porta 8080
+  Servidor executando na porta 8081
 ````
 
-Abrindo navegador `localhost:8080`, deve apresentar uma página com 2 gauges.
+Abrindo navegador `localhost:8081`, deve apresentar uma página com 2 gauges.
 
 ### Onde a mágica acontece
 
-A simplicidade da implementação não deixa ir muito além dos exemplo da documentação com das refências encontradas.
+A simplicidade da implementação não deixa ir muito além dos exemplos da documentação e das refências encontradas.
 
-#### front-end
+#### frontend
 
-Somente estas duas linhas são necessárias:
+Somente estas duas linhas são necessárias, para funcionar:
 - necessário instanciar o EventSource;
 - e adicionado para 'ouvir' o evento enviado pelo servidor.
 
@@ -53,7 +53,7 @@ eventSource.addEventListener('sensor-data', (e) => {
 });
 ```
 
-#### back-end
+#### Backend
 
 No back-end você precisa apenas:
 
