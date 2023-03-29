@@ -8,7 +8,7 @@ O SSE pode ser uma solução muito simples para receber dados do servidor em tem
 
 O interessante que não precisa instalar NENHUMA dependência ou pacote do servidor, como nos front.
 
-Dentre diversos usos e exemplos encontrado, para agilizar, utilizei um dashboard para IOT e foi criado 2 funções para simular um sensor de temperatura e outro de umidade.
+Dentre diversos usos e exemplos encontrados, para agilizar, utilizei um dashboard para IOT onde foi criado 2 funções no servidor para simular um sensor de temperatura e outro de umidade, assim replicar de forma simples o tutorial referenciado.
 
 ### Especificação
 
@@ -36,16 +36,21 @@ Abrindo navegador `localhost:8080`, deve apresentar uma página com 2 gauges.
 
 ### Onde a mágica acontece
 
+A simplicidade da implementação não deixa ir muito além dos exemplo da documentação com das refências encontradas.
+
 #### front-end
 
-Somente nestas 2 linhas, onde é instanciado o EventSource e na segunda linha, é adicionado para `ouvir` o evento enviado pelo servidor. 
+Somente estas duas linhas são necessárias:
+- necessário instanciar o EventSource;
+- e adicionado para 'ouvir' o evento enviado pelo servidor.
+
 
 ```js
-        const eventSource = new EventSource('/sensor-data-events');
-        eventSource.addEventListener('sensor-data', (e) => {
-            var jsonData = JSON.parse(e.data);
-            console.log(jsonData);
-        });
+const eventSource = new EventSource('/sensor-data-events');
+eventSource.addEventListener('sensor-data', (e) => {
+    var jsonData = JSON.parse(e.data);
+    console.log(jsonData);
+});
 ```
 
 #### back-end
@@ -53,23 +58,23 @@ Somente nestas 2 linhas, onde é instanciado o EventSource e na segunda linha, �
 No back-end você precisa apenas:
 
 - Definir os headers;
-- `imprimir` uma string com a definição do `evento`;
-- `imprimir` uma string com a definição dos dados a ser enviado (detalhe importante, colocar os dois \n\n);
--  fazer o flush.
+- 'imprimir' uma string com a definição do `evento`;
+- 'imprimir' uma string com a definição dos dados a ser enviado (detalhe importante, colocar os dois \n\n);
+- e no final, fazer o flush.
 
 ```go
-	http.HandleFunc("/sensor-data-events", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/event-stream")
-		w.Header().Set("Cache-Control", "no-cache")
-		w.Header().Set("Connection", "keep-alive")
-		for {
-			dataString, _ := json.Marshal(getSensorValues())
-			fmt.Fprintf(w, "event: sensor-data\n")
-			fmt.Fprintf(w, "data: %s\n\n", dataString)
-			w.(http.Flusher).Flush()
-			time.Sleep(1000 * time.Millisecond)
-		}
-	})
+http.HandleFunc("/sensor-data-events", func(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	for {
+		dataString, _ := json.Marshal(getSensorValues())
+		fmt.Fprintf(w, "event: sensor-data\n")
+		fmt.Fprintf(w, "data: %s\n\n", dataString)
+		w.(http.Flusher).Flush()
+		time.Sleep(1000 * time.Millisecond)
+	}
+})
 ```
 
 
